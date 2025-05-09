@@ -105,7 +105,7 @@ export class EnrollmentController {
 
     async getAll(_, res) {
         try {
-            const enrollments = Enrollment.find().populate('courseId').populate('userId');
+            const enrollments = await Enrollment.find().populate('courseId').populate('userId');
 
             return res.status(200).json({
                 statusCode: 200,

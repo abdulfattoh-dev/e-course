@@ -31,7 +31,7 @@ export class ReviewController {
 
     async getAll(_, res) {
         try {
-            const reviews = Review.find().populate('courseId').populate('userId');
+            const reviews = await Review.find().populate('courseId').populate('userId');
 
             return res.status(200).json({
                 statusCode: 200,
