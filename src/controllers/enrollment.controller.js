@@ -39,8 +39,6 @@ export class EnrollmentController {
             const mailMessage = {
                 from: process.env.SMTP_USER,
                 to: user.email,
-                // to: 'dilshod7861@gmail.com',
-                // to: 'abdulfattoh.dev@gmail.com',
                 subject: 'e-course',
                 text: otp
             }
@@ -52,13 +50,13 @@ export class EnrollmentController {
                 }
 
                 console.log(info);
-                setCache(user.email, otp);
-            });
+                setCache(user.email, { otp, courseId });
 
-            return res.status(200).json({
-                statusCode: 201,
-                message: 'OTP sent to your email',
-                data: {}
+                return res.status(200).json({
+                    statusCode: 201,
+                    message: 'OTP sent to your email',
+                    data: {}
+                });
             });
         } catch (error) {
             return catchError(res, 500, error.message);
@@ -67,27 +65,27 @@ export class EnrollmentController {
 
     async confirmEnrollment(req, res) {
         try {
-            const { courseId, email, otp } = req.body;
-            const course = await Course.findById(courseId);
-
-            if (!course) {
-                return catchError(res, 404, 'Course not found');
-            }
-
+            const { email, otp } = req.body;
             const user = await User.findOne({ email });
 
             if (!user) {
                 return catchError(res, 404, 'User not found');
             }
 
-            const otpCache = getCache(email);
+            const cacheData = getCache(email);
 
-            if (!otpCache || otp != otpCache) {
+            if (!cacheData || otp !== cacheData.otp) {
                 return catchError(res, 400, 'Invalid or expired OTP');
             }
 
+            const course = await Course.findById(cacheData.courseId);
+
+            if (!course) {
+                return catchError(res, 404, 'Course not found');
+            }
+
             const enrollment = await Enrollment.create({
-                courseId,
+                courseId: cacheData.courseId,
                 userId: user._id
             });
 
@@ -113,7 +111,7 @@ export class EnrollmentController {
                 data: enrollments
             });
         } catch (error) {
-            catchError(res, 500, error.message);
+            return catchError(res, 500, error.message);
         }
     }
 
